@@ -1,0 +1,47 @@
+# Technical Report: Biometric Speaker Verification for Automated Attendance Systems
+
+## Abstract
+This report presents an automated attendance system leveraging biometric speaker verification. The system utilizes the ECAPA-TDNN (Emphasized Channel Attention, Propagation and Aggregation in Time Delay Neural Network) architecture for robust speaker embedding extraction. To ensure reliability in real-world environments, the system incorporates advanced audio signal processing, heuristic liveness detection, and GPS-based geofencing. The implementation features a FastAPI backend for high-performance API management and a React-based frontend for a seamless user experience.
+
+## 1. Introduction
+Traditional attendance marking methods, such as manual rolls or card-based systems, are prone to "buddy punching" and administrative overhead. Biometric solutions offer a more secure and efficient alternative. Voice-based biometrics are particularly advantageous as they are non-intrusive and can be implemented using standard hardware (microphones on mobile devices or laptops). This project aims to provide a scalable, secure, and user-friendly voice attendance system.
+
+## 2. System Architecture
+The system follows a modern client-server architecture:
+- **Backend**: Built with FastAPI (Python), providing RESTful endpoints for enrollment and verification. It integrates SQLAlchemy for database management and a dedicated ML engine.
+- **Frontend**: A responsive React application providing interfaces for student enrollment, attendance marking, and administrative configuration.
+- **Database**: SQLite (via SQLAlchemy) stores student information, hashed voice templates (embeddings), and attendance logs.
+
+## 3. Machine Learning Methodology
+
+### 3.1 Speaker Embedding Extraction
+The core of the verification process is the **ECAPA-TDNN** model, implemented via the SpeechBrain library. This model is pre-trained on the VoxCeleb dataset, enabling it to map audio signals into high-dimensional embeddings (vectors) that uniquely represent a speaker's voice characteristics.
+
+### 3.2 Audio Signal Processing
+Before embedding extraction, the audio undergoes several preprocessing steps to improve accuracy:
+1.  **Bandpass Filtering**: A Butterworth filter limits the frequency range to 80Hz - 7000Hz, removing ambient noise and sub-sonic interference.
+2.  **Noise Reduction**: Spectral subtraction (using `noisereduce`) is applied to further clean the signal.
+3.  **Volume Normalization**: RMS-based normalization ensures consistent signal levels across different recording devices.
+
+### 3.3 Verification Logic
+Speaker verification is performed by calculating the **Cosine Similarity** between a live sample embedding and the stored average template embedding of the student. A configurable threshold (defaulting to 0.50) determines the match.
+
+## 4. Security Enhancements
+
+### 4.1 Liveness Detection
+To prevent spoofing attacks (e.g., replaying recorded audio), the system implements a heuristic liveness check. It analyzes:
+- **Dynamic Range**: Live speech typically has higher variation than compressed recordings.
+- **Zero Crossing Rate (ZCR)**: Detects electronic noise or unnatural spectral patterns.
+- **Energy Fluctuation**: Evaluates pauses and natural speech rhythms.
+
+### 4.2 GPS Geofencing
+To ensure the student is physically present in the classroom, the system validates the GPS coordinates provided by the frontend. Using the **Haversine formula**, it calculates the distance between the student and the classroom center, rejecting verification if the student is outside a predefined radius (e.g., 20 meters).
+
+## 5. Implementation Details
+The system is deployed using a container-friendly structure. The backend handles multi-part file uploads for audio samples and uses asynchronous processing for responsiveness. The frontend utilizes modern React patterns (Hooks, Context) and interacts with the backend via a structured API client.
+
+## 6. Conclusion
+The proposed speaker verification attendance system provides a robust and secure framework for educational institutions. By combining deep learning-based speaker recognition with multi-layered security checks (liveness and geofencing), it effectively mitigates common fraud scenarios while maintaining a high degree of usability.
+
+---
+*Keywords: Speaker Verification, ECAPA-TDNN, Biometrics, Attendance System, FastAPI, React, Signal Processing.*
