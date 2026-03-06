@@ -16,6 +16,5 @@ voice-set/
 voice-set (2)/
 voice-set.zip
 dataset_processed/
-fine_tuned_model/
 backend.log
 *.log
