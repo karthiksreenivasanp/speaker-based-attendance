@@ -1,19 +1,12 @@
 import axios from 'axios';
 
-// Get stored URL or default to the current host at port 8000
+// Get stored URL or default to the Hugging Face Space backend
 const getBaseUrl = () => {
     const stored = localStorage.getItem('api_url');
     if (stored) return stored;
 
-    // In production (unified hosting), the API is on the same host and port
-    if (import.meta.env.PROD) {
-        return window.location.origin;
-    }
-
-    // Auto-detect host for local dev/testing
-    const host = window.location.hostname;
-    if (host === 'localhost' || host === '127.0.0.1') return 'http://127.0.0.1:8000';
-    return `http://${host}:8000`;
+    // Default to the Hugging Face backend deployment
+    return 'https://karthiksreenivasanp-speaker-attendance-backend.hf.space';
 };
 
 export const api = axios.create({
