@@ -1,138 +1,88 @@
-# Voice Attendance System
+# Speaker Based Attendance System
 
-A full-stack, real-time Voice Attendance System built using Python, FastAPI, React (Vite), and SpeechBrain (ECAPA-TDNN). This system allows you to enroll students through their voice and automatically mark their attendance using speaker verification.
+A fully cloud-hosted, real-time Voice Biometric Attendance System built using Python, FastAPI, React (Vite), Firebase Firestore, and SpeechBrain (ECAPA-TDNN). This system allows students to enroll their voice signatures and automatically mark verifiable attendance based on speaker recognition and GPS geofencing.
 
-![Voice Attendance System](frontend-app/public/vite.svg)
-
-## Features
+## ✨ Features
 
 - **Speaker Verification:** Uses ECAPA-TDNN models from SpeechBrain to extract embeddings from a student's voice and compare it to known signatures.
-- **Microphone Integration:** Real-time recording on the browser and sending to the API.
-- **Robust Database:** SQLAlchemy with a SQLite backend to store student features and attendance logs.
-- **RESTful API:** FastAPI powers the backend services for simple and fast integrations.
-- **Frontend Dashboard:** React+Vite frontend for enrollment, verification, and viewing logs.
-- **Network Exposing:** Features Ngrok configuration to share your local backend securely via internet for remote connections.
+- **Serverless Cloud Database:** Fully integrated with Firebase Firestore for real-time syncing of students, classes, and attendance logs.
+- **Cloud Deployment Ready:** Includes Docker configuration for deploying the AI Backend on Hugging Face Spaces and GitHub Actions workflow for hosting the frontend on GitHub Pages.
+- **Geofenced Attendance:** Uses GPS to verify the student is within the classroom radius before permitting them to mark attendance.
+- **RESTful API:** FastAPI powers the robust backend services.
+- **Frontend Dashboard:** A responsive, modern React GUI for enrollment, verification, mentor selection, and viewing logs.
 
 ---
 
-## 🚀 Setup on a New System
+## 🚀 Live Demo
+
+- **Frontend App:** [Hosted on GitHub Pages](https://karthiksreenivasanp.github.io/speaker-based-attendance/)
+- **Backend API:** [Hosted on Hugging Face Spaces](https://huggingface.co/spaces/karthiksreenivasanp/speaker-attendance-backend)
+
+---
+
+## 💻 Local Development Setup
+
+If you wish to run the project locally instead of using the live deployments:
 
 ### Prerequisites
-
-You will need the following installed:
 - [Python 3.10+](https://www.python.org/downloads/)
-- [Node.js (LTS version)](https://nodejs.org/) (for the frontend React App)
-- [Git](https://git-scm.com/downloads)
+- [Node.js](https://nodejs.org/)
+- Firebase Credentials JSON file (place inside the root folder or supply via `FIREBASE_CREDENTIALS` environment variable)
 
----
+### 1. Backend Setup
 
-### 1. Clone the Repository
-
-Clone the project to your local machine:
 ```bash
-git clone https://github.com/sreelakshmits225/speaker_verification_attendence.git
-cd speaker_verification_attendence
-```
+# Clone the repository
+git clone https://github.com/karthiksreenivasanp/speaker-based-attendance.git
+cd speaker-based-attendance
 
-### 2. Backend Setup (FastAPI & SpeechBrain)
+# Create and activate a virtual environment
+python -m venv env
+source env/bin/activate  # On Windows: env\Scripts\activate
 
-1. **Create and Activate a Virtual Environment:**
-   Run the following commands in the root of the project:
-   ```bash
-   # Create a virtual environment named "env"
-   python -m venv env
+# Install Python Dependencies
+pip install -r requirements.txt
 
-   # Activate the virtual environment
-   # On Windows:
-   env\Scripts\activate
-   # On Mac/Linux:
-   source env/bin/activate
-   ```
-
-2. **Install Python Dependencies:**
-   With the virtual environment activated, install the required packages:
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-3. **Database Initialization:**
-   The application uses a SQLite database. It will be generated dynamically on first run in the root directory under the name `voice_attendance.db`. If you need to reset your database at any time, you can run:
-   ```bash
-   python reset_database.py
-   ```
-
-> [!IMPORTANT]
-> The very first time you verify/enroll a speaker, SpeechBrain will automatically download the large pre-trained `spkrec-ecapa-voxceleb` model and cache it locally in `pretrained_models/`. This might take a few minutes depending on your internet connection.
-
-### 3. Frontend Setup (React/Vite)
-
-1. Open a **new terminal window** and navigate to the frontend application:
-   ```bash
-   cd frontend-app
-   ```
-
-2. Install Node.js packages:
-   ```bash
-   npm install
-   ```
-
----
-
-## 🏃 Running the Application
-
-### The Easy Way (Windows ONLY)
-If you are on Windows, simply double click the `start_app.bat` script located in the root directory. It runs both the Python API (FastAPI) and the React Frontend simultaneously.
-It will print the URLs you need to access both the Backend and the app on your Browser or Phone.
-
-### The Manual Way (Mac/Linux/Windows)
-
-If you don't want to use the batch script, run the layers separately.
-
-**1. Start the API Server:**
-In the root directory, with the virtual environment activated:
-```bash
-# Run uvicorn server on all interfaces (0.0.0.0) so your phone can reach it
+# Start the FastAPI Server
 uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
-The API should now be running at: `http://localhost:8000`
+*Note: The first time you run a voice inference, it will download necessary SpeechBrain AI models into the `pretrained_models/` directory.*
 
-**2. Start the Frontend:**
-In the `frontend-app` directory:
+### 2. Frontend Setup
+
 ```bash
+# In a new terminal, navigate to the frontend directory
+cd frontend-app
+
+# Install Node dependencies
+npm install
+
+# Start the React development server
 npm run dev -- --host
 ```
-The Frontend should now be running at: `http://localhost:5173`
 
 ---
 
-## 🌍 Remote Access (Sharing to other devices)
-
-If you want others over the internet to connect to your app, you can use `ngrok`.
-A script is provided in the root `share_remote.bat` which will start ngrok and create a public URL.
-
-**Usage:**
-1. You must have a free [Ngrok account](https://ngrok.com/).
-2. Unzip or add `ngrok.exe` in the root of the project (if it isn't set up globally).
-3. Connect your authtoken in a terminal: `ngrok config add-authtoken <YOUR_TOKEN>`
-4. Run the sharing script:
-   ```bash
-   share_remote.bat
-   ```
-
-This spins up paths that expose standard traffic securely. You'll need to update the base URL in your frontend's `src/api.js` to whatever HTTPS URL Ngrok generated.
-
-## Folder Structure
+## 📁 Project Structure
 
 ```
 ├── app/                  # FastAPI Application Core
-│   ├── api/              # API Endpoints (enrollment, verification)
+│   ├── api/              # API Endpoints (enrollment, verification, auth)
 │   ├── ml_engine/        # SpeechBrain & Embedding extraction logic
-│   ├── db/               # Database management
-│   └── models.py         # SQLAlchemy Models
+│   └── db/               # Firebase Database connections
 ├── frontend-app/         # VITE React application source
-├── dataset/              # Downloaded student datasets (git ignored)
-├── pretrained_models/    # Cached SpeechBrain models (git ignored)
-├── reset_database.py     # Script to clear local databases
-├── start_app.bat         # Single click script to run the Full Stack Application
-└── requirements.txt      # Python dependencies
+├── pretrained_models/    # Cached SpeechBrain models (Git LFS)
+├── fine_tuned_model/     # Optional custom-trained models (Git LFS)
+├── Dockerfile            # Hugging Face deployment container
+├── requirements.txt      # Python dependencies
+└── .github/workflows/    # CI/CD pipelines
 ```
+
+---
+
+## 🤖 Tech Stack
+
+- **AI/ML:** PyTorch, SpeechBrain, Librosa, Noisereduce
+- **Backend:** Python, FastAPI, Firebase Firestore (NoSQL)
+- **Frontend:** React, HTML5 Audio API, Geolocation API, Tailwind Concepts
+- **Deployment:** Docker, Hugging Face Spaces, GitHub Pages, GitHub Actions
