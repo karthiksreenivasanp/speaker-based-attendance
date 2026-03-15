@@ -26,8 +26,11 @@ function Dashboard() {
 
     const loadData = async () => {
         setLoading(true);
+        console.log("loadData started, role:", role);
         try {
+            console.log("Fetching /api/v1/students/me");
             const profileRes = await api.get('/api/v1/students/me');
+            console.log("profileRes:", profileRes.data);
 
             if (role === 'TEACHER') {
                 setUserProfile(profileRes.data);
@@ -53,21 +56,41 @@ function Dashboard() {
                 });
                 setRecentLogs(logsRes.data);
             } else {
-                const [studentProf, mentorsRes, myLogs, voiceRes] = await Promise.all([
-                    api.get('/api/v1/students/profile'),
-                    api.get('/api/v1/students/mentors'),
-                    api.get('/api/v1/admin/attendance?limit=10'),
-                    api.get('/api/v1/students/voice')
-                ]);
-                setUserProfile({ ...profileRes.data, ...studentProf.data });
-                setMentors(mentorsRes.data);
-                setRecentLogs(myLogs.data);
-                setVoiceStatus(voiceRes.data);
+                console.log("Fetching student details...");
+                try {
+                    // Fetch profile separately so a 404 won't crash the dashboard loading
+                    let studentProfData = {};
+                    try {
+                        const profResp = await api.get('/api/v1/students/profile');
+                        studentProfData = profResp.data;
+                    } catch (profErr) {
+                        console.error("Profile fetch error:", profErr);
+                        alert("Student profile not found. Please ask an admin to create your student record.");
+                        // Optionally redirect or clear storage:
+                        // localStorage.clear();
+                        // window.location.href = '/login';
+                    }
+
+                    const [mentorsRes, myLogs, voiceRes] = await Promise.all([
+                        api.get('/api/v1/students/mentors'),
+                        api.get('/api/v1/admin/attendance?limit=10'),
+                        api.get('/api/v1/students/voice')
+                    ]);
+                    console.log("All concurrent fetches successful.");
+                    setUserProfile({ ...profileRes.data, ...studentProfData });
+                    setMentors(mentorsRes.data);
+                    setRecentLogs(myLogs.data);
+                    setVoiceStatus(voiceRes.data);
+                } catch (innerErr) {
+                    console.error("Error in fetching student dashboard data:", innerErr);
+                    alert("Dashboard failed to load completely.");
+                }
             }
         } catch (e) {
             console.error("Dashboard Load Error", e);
         } finally {
             setLoading(false);
+            console.log("loading set to false");
         }
     };
 

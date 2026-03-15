@@ -1,6 +1,5 @@
 fastapi>=0.109.0
 uvicorn>=0.27.0
-sqlalchemy>=2.0.0
 python-multipart>=0.0.9
 speechbrain>=0.5.15
 torch>=2.0.0
@@ -13,3 +12,6 @@ python-dotenv>=1.0.0
 aiofiles>=23.2.1
 passlib[bcrypt]>=1.7.4
 python-jose[cryptography]>=3.3.0
+firebase-admin==6.5.0
+noisereduce>=2.0.0
+soundfile>=0.12.0

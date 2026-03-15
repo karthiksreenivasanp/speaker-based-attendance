@@ -19,14 +19,14 @@ class UserCreate(UserBase):
     course: Optional[str] = None
 
 class User(UserBase):
-    id: int
+    id: str
     model_config = ConfigDict(from_attributes=True)
 
 class Token(BaseModel):
     access_token: str
     token_type: str
     role: UserRole
-    user_id: int
+    user_id: str
 
 class TokenData(BaseModel):
     username: Optional[str] = None
@@ -42,19 +42,19 @@ class StudentBase(BaseModel):
     name: str
     roll_number: str
     course: str
-    mentor_id: Optional[int] = None
+    mentor_id: Optional[str] = None
 
 class StudentCreate(StudentBase):
-    user_id: int
+    user_id: str
 
 class Student(StudentBase):
-    id: int
+    id: str
     model_config = ConfigDict(from_attributes=True)
 
 # Attendance Schemas
 class AttendanceBase(BaseModel):
-    student_id: int
-    class_id: int
+    student_id: str
+    class_id: str
     status: str
 
 class AttendanceCreate(AttendanceBase):
@@ -64,7 +64,7 @@ class AttendanceCreate(AttendanceBase):
     longitude: Optional[float] = None
 
 class Attendance(AttendanceBase):
-    id: int
+    id: str
     timestamp: datetime
     verification_score: float
     liveness_score: float
@@ -80,9 +80,9 @@ class ClassLocationUpdate(BaseModel):
     radius: Optional[float] = 20.0
 
 class ClassSession(BaseModel):
-    id: int
+    id: str
     course_id: str
-    teacher_id: Optional[int] = None
+    teacher_id: Optional[str] = None
     latitude: Optional[float] = None
     longitude: Optional[float] = None
     radius: float
@@ -94,6 +94,6 @@ class VerificationResponse(BaseModel):
     verified: bool
     score: float
     liveness_score: float
-    student_id: Optional[int] = None
+    student_id: Optional[str] = None
     message: str
     location_verified: bool = True

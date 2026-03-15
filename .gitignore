@@ -11,10 +11,14 @@ voice_attendance.db
 uploads/
 temp_dataset/
 dataset/
-pretrained_models/
 voice-set/
 voice-set (2)/
 voice-set.zip
 dataset_processed/
 backend.log
 *.log
+firebase_credentials.json
+cloudflared
+frontend-app/dist/
+token.txt
+fine_tuned_model/

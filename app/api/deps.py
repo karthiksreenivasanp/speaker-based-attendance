@@ -1,9 +1,9 @@
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import jwt, JWTError
-from sqlalchemy.orm import Session
+
 from app.db.database import get_db
-from app import models, schemas
+from app import schemas
 from app.core import security
 from app.core.config import settings
 
@@ -12,8 +12,8 @@ oauth2_scheme = OAuth2PasswordBearer(
 )
 
 def get_current_user(
-    db: Session = Depends(get_db), token: str = Depends(oauth2_scheme)
-) -> models.User:
+    db = Depends(get_db), token: str = Depends(oauth2_scheme)
+) -> schemas.User:
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -29,21 +29,24 @@ def get_current_user(
         token_data = schemas.TokenData(username=username)
     except JWTError:
         raise credentials_exception
-    user = db.query(models.User).filter(models.User.username == token_data.username).first()
-    if user is None:
+    
+    user_doc = db.collection("users").document(token_data.username).get()
+    if not user_doc.exists:
         raise credentials_exception
-    return user
+        
+    user_data = user_doc.to_dict()
+    return schemas.User(**user_data, id=user_doc.id)
 
 def get_current_active_user(
-    current_user: models.User = Depends(get_current_user),
-) -> models.User:
+    current_user: schemas.User = Depends(get_current_user),
+) -> schemas.User:
     return current_user
 
 class RoleChecker:
-    def __init__(self, allowed_roles: list[models.UserRole]):
+    def __init__(self, allowed_roles: list[schemas.UserRole]):
         self.allowed_roles = allowed_roles
 
-    def __call__(self, user: models.User = Depends(get_current_active_user)):
+    def __call__(self, user: schemas.User = Depends(get_current_active_user)):
         if user.role not in self.allowed_roles:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
@@ -52,5 +55,5 @@ class RoleChecker:
         return user
 
 # Role dependencies
-teacher_required = RoleChecker([models.UserRole.TEACHER])
-student_required = RoleChecker([models.UserRole.STUDENT])
+teacher_required = RoleChecker([schemas.UserRole.TEACHER])
+student_required = RoleChecker([schemas.UserRole.STUDENT])

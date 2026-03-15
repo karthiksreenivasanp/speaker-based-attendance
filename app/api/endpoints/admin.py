@@ -1,149 +1,194 @@
 from fastapi import APIRouter, Depends, Query, HTTPException, status
 from fastapi.responses import StreamingResponse
-from sqlalchemy.orm import Session
 from typing import List, Optional
 import csv
 import io
-from datetime import datetime
+from datetime import datetime, timezone
+import uuid
 
 from app.db.database import get_db
-from app import models, schemas
+from app import schemas
 from app.api.deps import teacher_required, get_current_active_user
 
 router = APIRouter()
 
 @router.get("/classes/active", response_model=schemas.ClassSession)
 def get_active_class(
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(teacher_required)
+    db = Depends(get_db),
+    current_user: schemas.User = Depends(teacher_required)
 ):
-    class_session = db.query(models.ClassSession).filter(
-        models.ClassSession.teacher_id == current_user.id
-    ).order_by(models.ClassSession.session_start.desc()).first()
+    from google.cloud.firestore import Query as FSQuery
+    sessions = db.collection("classes").where("teacher_id", "==", current_user.id).order_by("session_start", direction=FSQuery.DESCENDING).limit(1).get()
     
-    if not class_session:
+    if not sessions:
         raise HTTPException(status_code=404, detail="No active class found")
-    return class_session
+    
+    session_data = sessions[0].to_dict()
+    return schemas.ClassSession(**session_data, id=sessions[0].id)
 
 @router.post("/classes/start", response_model=schemas.ClassSession)
 def start_class_session(
     location: schemas.ClassLocationUpdate,
     course_id: str = Query("DEFAULT_COURSE"),
     room: str = Query("Main Hall"),
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(teacher_required)
+    db = Depends(get_db),
+    current_user: schemas.User = Depends(teacher_required)
 ):
-    now = datetime.utcnow()
-    new_session = models.ClassSession(
-        course_id=course_id,
-        teacher_id=current_user.id,
-        date=now.strftime("%Y-%m-%d"),
-        time=now.strftime("%H:%M"),
-        session_start=now,
-        room=room,
-        latitude=location.latitude,
-        longitude=location.longitude,
-        radius=location.radius or 20.0
-    )
-    db.add(new_session)
-    db.commit()
-    db.refresh(new_session)
-    return new_session
+    now = datetime.now(timezone.utc)
+    new_id = str(uuid.uuid4())
+    class_data = {
+        "course_id": course_id,
+        "teacher_id": current_user.id,
+        "date": now.strftime("%Y-%m-%d"),
+        "time": now.strftime("%H:%M"),
+        "session_start": now, # Firestore automatically converts to proper Timestamp
+        "room": room,
+        "latitude": location.latitude,
+        "longitude": location.longitude,
+        "radius": location.radius or 20.0
+    }
+    
+    db.collection("classes").document(new_id).set(class_data)
+    
+    return schemas.ClassSession(**class_data, id=new_id)
 
 @router.get("/attendance", response_model=List[schemas.Attendance])
 def read_attendance(
     skip: int = 0, 
     limit: int = 100, 
-    class_id: Optional[int] = None,
-    student_id: Optional[int] = None,
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_active_user)
+    class_id: Optional[str] = None,
+    student_id: Optional[str] = None,
+    db = Depends(get_db),
+    current_user: schemas.User = Depends(get_current_active_user)
 ):
-    query = db.query(models.Attendance)
+    from google.cloud.firestore import Query as FSQuery
+    query = db.collection("attendance")
     
-    # If student, they can only see their own attendance
-    if current_user.role == models.UserRole.STUDENT:
-        student = db.query(models.Student).filter(models.Student.user_id == current_user.id).first()
-        if not student:
+    if current_user.role == schemas.UserRole.STUDENT:
+        student_doc = db.collection("students").document(current_user.id).get()
+        if not student_doc.exists:
             raise HTTPException(status_code=404, detail="Student profile not found")
-        query = query.filter(models.Attendance.student_id == student.id)
+        query = query.where("student_id", "==", current_user.id)
     else:
-        # Teachers can see attendance of their mentored students
         if class_id:
-            query = query.filter(models.Attendance.class_id == class_id)
+            query = query.where("class_id", "==", class_id)
         if student_id:
-            query = query.filter(models.Attendance.student_id == student_id)
+            query = query.where("student_id", "==", student_id)
             
-    return query.offset(skip).limit(limit).all()
+    try:
+        docs = query.order_by("timestamp", direction=FSQuery.DESCENDING).limit(limit).get()
+        return [schemas.Attendance(**d.to_dict(), id=d.id) for d in docs]
+    except Exception as e:
+        print(f"Firestore Query Error (likely missing index): {e}")
+        # If the index is missing, return empty or un-ordered list to not break the frontend
+        try:
+            docs = query.limit(limit).get()
+            return [schemas.Attendance(**d.to_dict(), id=d.id) for d in docs]
+        except Exception as e2:
+            print(f"Fallback query also failed: {e2}")
+            return []
 
 @router.patch("/attendance/{attendance_id}")
 def update_attendance_status(
-    attendance_id: int,
+    attendance_id: str,
     status: str,
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(teacher_required)
+    db = Depends(get_db),
+    current_user: schemas.User = Depends(teacher_required)
 ):
-    attendance = db.query(models.Attendance).filter(models.Attendance.id == attendance_id).first()
-    if not attendance:
-        raise HTTPException(status_code=404, detail="Attendance record not found")
+    attendance_ref = db.collection("attendance").document(attendance_id)
+    attendance_doc = attendance_ref.get()
     
-    # Check if this teacher is the mentor
-    if attendance.student.mentor_id != current_user.id:
+    if not attendance_doc.exists:
+        raise HTTPException(status_code=404, detail="Attendance record not found")
+        
+    att_data = attendance_doc.to_dict()
+    student_id = att_data.get("student_id")
+    
+    student_doc = db.collection("students").document(student_id).get()
+    if student_doc.exists and student_doc.to_dict().get("mentor_id") != current_user.id:
          raise HTTPException(status_code=403, detail="You can only change attendance for your mentored students")
          
-    attendance.status = status
-    db.commit()
+    attendance_ref.update({"status": status})
     return {"message": "Attendance status updated", "new_status": status}
 
 @router.post("/attendance/approve")
 def approve_attendance(
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(teacher_required)
+    db = Depends(get_db),
+    current_user: schemas.User = Depends(teacher_required)
 ):
-    # Approve all unapproved records for the teacher's mentored students
-    students = db.query(models.Student).filter(models.Student.mentor_id == current_user.id).all()
+    students = db.collection("students").where("mentor_id", "==", current_user.id).get()
     student_ids = [s.id for s in students]
     
-    db.query(models.Attendance).filter(
-        models.Attendance.student_id.in_(student_ids),
-        models.Attendance.is_approved == False
-    ).update({"is_approved": True}, synchronize_session=False)
+    if not student_ids:
+        return {"message": "No students to approve"}
+        
+    batch = db.batch()
     
-    db.commit()
+    for s_id in student_ids:
+        unapproved_docs = db.collection("attendance").where("student_id", "==", s_id).where("is_approved", "==", False).get()
+        for doc in unapproved_docs:
+            batch.update(doc.reference, {"is_approved": True})
+            
+    batch.commit()
     return {"message": "Attendance sheet approved"}
 
 @router.get("/attendance/export")
 def export_attendance_csv(
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(teacher_required)
+    db = Depends(get_db),
+    current_user: schemas.User = Depends(teacher_required)
 ):
-    # Export all approved records for the teacher's students
-    attendance_query = db.query(models.Attendance)\
-        .join(models.Student, models.Attendance.student_id == models.Student.id)\
-        .filter(models.Attendance.is_approved == True)\
-        .filter(models.Student.mentor_id == current_user.id)
+    students_docs = db.collection("students").where("mentor_id", "==", current_user.id).get()
+    student_map = {doc.id: doc.to_dict() for doc in students_docs}
+    student_ids = list(student_map.keys())
     
-    attendance_records = attendance_query.all()
-    
+    if not student_ids:
+        raise HTTPException(status_code=404, detail="No mentored students found")
+        
     output = io.StringIO()
     writer = csv.writer(output)
     writer.writerow(["Student ID", "Name", "Roll Number", "Course", "Status", "Time", "Confidence Score", "Approved"])
     
-    for record in attendance_records:
-        writer.writerow([
-            record.student.id,
-            record.student.name,
-            record.student.roll_number,
-            record.student.course,
-            record.status,
-            record.timestamp,
-            f"{record.verification_score:.2f}",
-            record.is_approved
-        ])
-    
+    for s_id in student_ids:
+        records = db.collection("attendance").where("student_id", "==", s_id).where("is_approved", "==", True).get()
+        student_data = student_map[s_id]
+        for record_doc in records:
+            record = record_doc.to_dict()
+            writer.writerow([
+                s_id,
+                student_data.get("name"),
+                student_data.get("roll_number"),
+                student_data.get("course"),
+                record.get("status"),
+                record.get("timestamp").isoformat() if hasattr(record.get("timestamp"), 'isoformat') else record.get("timestamp"),
+                f"{record.get('verification_score', 0.0):.2f}",
+                record.get("is_approved")
+            ])
+            
     output.seek(0)
     return StreamingResponse(
         io.BytesIO(output.getvalue().encode()), 
         media_type="text/csv", 
         headers={"Content-Disposition": f"attachment; filename=approved_attendance_{datetime.now().strftime('%Y%m%d')}.csv"}
     )
+
+@router.delete("/attendance/reset")
+def reset_attendance(
+    db = Depends(get_db),
+    current_user: schemas.User = Depends(teacher_required)
+):
+    try:
+        def delete_collection(coll_ref, batch_size):
+            docs = coll_ref.limit(batch_size).get()
+            deleted = 0
+            for doc in docs:
+                doc.reference.delete()
+                deleted += 1
+            if deleted >= batch_size:
+                return delete_collection(coll_ref, batch_size)
+        
+        delete_collection(db.collection("attendance"), 100)
+        
+        return {"message": "All attendance records cleared successfully."}
+    except Exception as e:
+        print(f"Delete failed: {e}")
+        raise HTTPException(status_code=500, detail="Database reset failed.")

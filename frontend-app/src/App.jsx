@@ -26,7 +26,7 @@ function NavBar() {
 
   const handleLogout = () => {
     localStorage.clear();
-    window.location.href = '/login';
+    window.location.href = (import.meta.env.BASE_URL || '/') + 'login';
   };
 
   if (!localStorage.getItem('token')) return null;
@@ -103,8 +103,9 @@ function NavBar() {
 }
 
 function App() {
+  const basename = import.meta.env.BASE_URL || '/';
   return (
-    <BrowserRouter>
+    <BrowserRouter basename={basename}>
       <div className="pb-24 min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-primary-500/30">
         <Routes>
           <Route path="/login" element={<Login />} />

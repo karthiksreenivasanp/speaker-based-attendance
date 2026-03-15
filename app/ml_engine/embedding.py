@@ -31,9 +31,10 @@ import os
 class SpeakerEmbedding:
     def __init__(self):
         # Using ECAPA-TDNN from SpeechBrain
+        model_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "fine_tuned_model"))
         self.classifier = EncoderClassifier.from_hparams(
-            source="./fine_tuned_model/",
-            savedir="./fine_tuned_model/"
+            source=model_dir,
+            savedir=model_dir
         )
         self.classifier.eval()
 
