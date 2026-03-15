@@ -2,7 +2,6 @@ import torch
 import torchaudio
 import numpy as np
 from app.core.config import settings
-import noisereduce as nr
 import soundfile as sf
 import scipy.signal as signal
 
@@ -35,14 +34,9 @@ class AudioProcessor:
         except Exception:
             pass # Fallback if filter fails
 
-        # --- STEP 2: NOISE REDUCTION ---
-        if reduce_noise:
-            try:
-                 signal_denoised = nr.reduce_noise(y=signal_np, sr=fs, prop_decrease=0.75, stationarity=True)
-            except:
-                 signal_denoised = signal_np # Fallback
-        else:
-            signal_denoised = signal_np
+        # We rely strictly on SpeechBrain's internal robust augmentations 
+        # instead of external noise reduction libraries that cause OOM errors.
+        signal_denoised = signal_np
 
         # Convert to tensor
         # Fix for "negative strides" error: ensure array is contiguous

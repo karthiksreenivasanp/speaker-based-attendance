@@ -192,3 +192,38 @@ def reset_attendance(
     except Exception as e:
         print(f"Delete failed: {e}")
         raise HTTPException(status_code=500, detail="Database reset failed.")
+
+@router.delete("/students/{student_id}")
+def delete_student(
+    student_id: str,
+    db = Depends(get_db),
+    current_user: schemas.User = Depends(teacher_required)
+):
+    student_ref = db.collection("students").document(student_id)
+    student_doc = student_ref.get()
+    
+    if not student_doc.exists:
+        raise HTTPException(status_code=404, detail="Student not found")
+        
+    student_data = student_doc.to_dict()
+    if student_data.get("mentor_id") != current_user.id:
+         raise HTTPException(status_code=403, detail="You can only delete your mentored students")
+
+    batch = db.batch()
+    
+    # 1. Delete Student Profile
+    batch.delete(student_ref)
+    
+    # 2. Delete all their attendance records
+    attendance_docs = db.collection("attendance").where("student_id", "==", student_id).get()
+    for doc in attendance_docs:
+         batch.delete(doc.reference)
+         
+    # 3. Delete their voice templates
+    template_docs = db.collection("voice_templates").where("student_id", "==", student_id).get()
+    for doc in template_docs:
+         batch.delete(doc.reference)
+         
+    batch.commit()
+    
+    return {"message": f"Student {student_data.get('name')} and all associated records permanently deleted."}

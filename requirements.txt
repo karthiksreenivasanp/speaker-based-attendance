@@ -13,5 +13,4 @@ aiofiles>=23.2.1
 passlib[bcrypt]>=1.7.4
 python-jose[cryptography]>=3.3.0
 firebase-admin==6.5.0
-noisereduce>=2.0.0
 soundfile>=0.12.0

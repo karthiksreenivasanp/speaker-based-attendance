@@ -68,6 +68,17 @@ function StudentList() {
         }
     };
 
+    const handleDeleteStudent = async (studentId, studentName) => {
+        if (!window.confirm(`WARNING: Are you sure you want to completely delete ${studentName} and all their attendance/voice records? This cannot be undone.`)) return;
+        try {
+            await api.delete(`/api/v1/admin/students/${studentId}`);
+            alert(`${studentName} deleted successfully.`);
+            loadData();
+        } catch (e) {
+            alert(e.response?.data?.detail || "Failed to delete student");
+        }
+    };
+
     const filteredStudents = students.filter(s =>
         s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (s.roll_number && s.roll_number.toLowerCase().includes(searchQuery.toLowerCase()))
@@ -147,9 +158,13 @@ function StudentList() {
                                         }`}>
                                         {s.attendance?.status || 'ABSENT'}
                                     </div>
-                                    <Link to="/logs" className="text-slate-500 hover:text-indigo-400 p-1 transition-colors">
-                                        <Edit2 size={14} />
-                                    </Link>
+                                    <button 
+                                        onClick={() => handleDeleteStudent(s.id, s.name)}
+                                        className="text-slate-500 hover:text-red-400 p-1 transition-colors"
+                                        title="Delete Student"
+                                    >
+                                        <Trash2 size={14} />
+                                    </button>
                                 </div>
                             </motion.div>
                         ))
