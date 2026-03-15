@@ -148,18 +148,20 @@ function Verify() {
                             <h3 className="text-xl font-bold text-white mt-6 mb-2">Analyzing Voice Print</h3>
                             <p className="text-slate-400 text-sm">Matching against your enrolled signature...</p>
                         </motion.div>
-                    ) : result ? (
+                    ) : result ? (() => {
+                        const isSuccess = (result.identified || result.verified) && !result.error;
+                        const displayStatus = result.status || (result.message?.includes('PRESENT') ? 'PRESENT' : result.message?.includes('LATE') ? 'LATECOMER' : 'VERIFIED');
+                        const isLate = displayStatus === 'LATECOMER' || (displayStatus && displayStatus.includes('LATE'));
+                        return (
                         <motion.div key="result" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center">
-                            {result.identified && !result.error ? (
+                            {isSuccess ? (
                                 <>
-                                    <div className={`w-24 h-24 rounded-full flex items-center justify-center mb-6 shadow-xl ${result.status === 'LATECOMER' || result.status.includes('LATE') ? 'bg-amber-500 shadow-amber-500/30' : 'bg-emerald-500 shadow-emerald-500/30'
-                                        }`}>
+                                    <div className={`w-24 h-24 rounded-full flex items-center justify-center mb-6 shadow-xl ${isLate ? 'bg-amber-500 shadow-amber-500/30' : 'bg-emerald-500 shadow-emerald-500/30'}`}>
                                         <Verified size={48} className="text-white" />
                                     </div>
                                     <h2 className="text-2xl font-bold text-white mb-2">Attendance Logged</h2>
-                                    <div className={`text-xl font-black mb-4 px-4 py-1.5 rounded-lg border ${result.status === 'LATECOMER' || result.status.includes('LATE') ? 'text-amber-400 border-amber-500/30 bg-amber-500/10' : 'text-emerald-400 border-emerald-500/30 bg-emerald-500/10'
-                                        }`}>
-                                        Status: {result.status}
+                                    <div className={`text-xl font-black mb-4 px-4 py-1.5 rounded-lg border ${isLate ? 'text-amber-400 border-amber-500/30 bg-amber-500/10' : 'text-emerald-400 border-emerald-500/30 bg-emerald-500/10'}`}>
+                                        Status: {displayStatus}
                                     </div>
                                     <div className="text-sm font-medium text-slate-400 bg-slate-900/50 px-3 py-1.5 rounded-full border border-slate-700/50">
                                         Voice Match: <span className="text-white">{(result.score * 100).toFixed(0)}%</span>
@@ -188,7 +190,8 @@ function Verify() {
                                 <ArrowLeft size={18} /> Retry Sign-in
                             </button>
                         </motion.div>
-                    ) : (
+                        );
+                    })() : (
                         <motion.div key="record" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col h-full justify-between items-center py-4">
 
                             {/* GPS Status Dashboard Item */}
