@@ -19,6 +19,7 @@ function Dashboard() {
     const [userProfile, setUserProfile] = useState(null);
     const [mentors, setMentors] = useState([]);
     const [voiceStatus, setVoiceStatus] = useState(null);
+    const [isChangingMentor, setIsChangingMentor] = useState(false);
 
     useEffect(() => {
         loadData();
@@ -160,6 +161,7 @@ function Dashboard() {
         try {
             await api.post(`/api/v1/students/select-mentor/${id}`);
             alert("Mentor Selected!");
+            setIsChangingMentor(false);
             loadData();
         } catch (e) {
             alert(e.response?.data?.detail || "Failed to select mentor");
@@ -314,14 +316,24 @@ function Dashboard() {
                     </div>
                     <div className="col-span-2 mt-2">
                         <p className="text-xs text-slate-500 uppercase font-semibold">Mentor</p>
-                        <p className="text-white font-medium flex items-center gap-2">
-                            {userProfile?.mentor_id ? `Teacher ID ${userProfile.mentor_id}` : <span className="text-amber-400 text-sm">Not Selected</span>}
+                        <p className="text-white font-medium flex items-center justify-between">
+                            <span className="flex items-center gap-2">
+                                {userProfile?.mentor_id ? `Teacher ID ${userProfile.mentor_id}` : <span className="text-amber-400 text-sm">Not Selected</span>}
+                            </span>
+                            {userProfile?.mentor_id && (
+                                <button 
+                                    onClick={() => setIsChangingMentor(!isChangingMentor)}
+                                    className="text-xs bg-slate-700/50 hover:bg-slate-700 px-3 py-1 rounded transition-colors text-slate-300"
+                                >
+                                    {isChangingMentor ? 'Cancel' : 'Change'}
+                                </button>
+                            )}
                         </p>
                     </div>
                 </div>
             </div>
 
-            {!userProfile?.mentor_id && (
+            {(!userProfile?.mentor_id || isChangingMentor) && (
                 <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-amber-900/20 border border-amber-500/30 p-5 rounded-2xl">
                     <h3 className="text-amber-400 font-bold mb-2 flex items-center gap-2"><ShieldCheck size={18} /> Select Your Mentor</h3>
                     <p className="text-sm text-amber-200/70 mb-4">You must select an available mentor to attend their classes.</p>

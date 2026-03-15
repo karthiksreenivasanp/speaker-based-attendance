@@ -42,11 +42,7 @@ def select_mentor(
         raise HTTPException(status_code=404, detail="Student profile not found")
     
     student_data = student_doc.to_dict()
-    if student_data.get("mentor_id"):
-        raise HTTPException(
-            status_code=400, 
-            detail="Mentor already selected. Contact your mentor to change it."
-        )
+    # Mentor update is allowed, so we don't throw an exception if they already have one.
     
     teacher_doc = db.collection("users").document(teacher_id).get()
     if not teacher_doc.exists or teacher_doc.to_dict().get("role") != schemas.UserRole.TEACHER.value:
