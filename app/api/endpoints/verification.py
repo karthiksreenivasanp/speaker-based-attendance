@@ -191,11 +191,13 @@ async def identify_speaker(
     current_user: schemas.User = Depends(student_required),
     db = Depends(get_db)
 ):
+    print(f"[IDENTIFY] Starting identification for user: '{current_user.id}'")
     student_doc = db.collection("students").document(current_user.id).get()
     if not student_doc.exists:
         raise HTTPException(status_code=400, detail="Student profile missing")
     student = student_doc.to_dict()
     student["id"] = student_doc.id # Add document ID to the dict
+    print(f"[IDENTIFY] Student doc ID: '{student_doc.id}', mentor: '{student.get('mentor_id')}'")
 
     if not student.get("mentor_id"):
         raise HTTPException(status_code=400, detail="Student must select a mentor first")
@@ -206,18 +208,25 @@ async def identify_speaker(
 
     # Find the latest "active" class session for the student's mentor
     from google.cloud.firestore import Query as FSQuery
-    classes = db.collection("classes").where("teacher_id", "==", student.get("mentor_id")).order_by("session_start", direction=FSQuery.DESCENDING).limit(1).get()
+    try:
+        classes = db.collection("classes").where("teacher_id", "==", student.get("mentor_id")).order_by("session_start", direction=FSQuery.DESCENDING).limit(1).get()
+    except Exception as e:
+        print(f"[IDENTIFY] Classes query failed (missing index?): {e}")
+        # Fallback: fetch without order_by
+        classes = db.collection("classes").where("teacher_id", "==", student.get("mentor_id")).limit(1).get()
     
     if not classes:
         raise HTTPException(status_code=400, detail="No active class session found for your mentor")
     
     class_session = classes[0].to_dict()
     class_session["id"] = classes[0].id # Add document ID to the dict
+    print(f"[IDENTIFY] Found class session: '{class_session['id']}'")
 
     # Strict Geofencing Check
     c_lat, c_lon = class_session.get("latitude"), class_session.get("longitude")
     if c_lat is not None and c_lon is not None:
         distance = haversine(latitude, longitude, c_lat, c_lon)
+        print(f"[IDENTIFY] Distance from class: {distance:.1f}m (radius: {class_session.get('radius', 20.0)}m)")
         if distance > class_session.get("radius", 20.0):
              raise HTTPException(status_code=403, detail=f"Outside allowed area ({distance:.1f}m away)")
 
@@ -236,9 +245,17 @@ async def identify_speaker(
         emb = speaker_model.get_embedding(signal)
         
         # Verify it matches the logged-in student
+        print(f"[IDENTIFY] Looking for voice_templates with student_id='{current_user.id}'")
         templates = db.collection("voice_templates").where("student_id", "==", current_user.id).limit(1).get()
+        
+        # Debug: list all templates to see what's actually in the collection
         if not templates:
-            return {"identified": False, "message": "Voice not enrolled"}
+            all_templates = db.collection("voice_templates").limit(10).get()
+            print(f"[IDENTIFY] No template found! All templates in DB:")
+            for t in all_templates:
+                t_data = t.to_dict()
+                print(f"  - doc_id='{t.id}', student_id='{t_data.get('student_id')}'")
+            return {"identified": False, "message": f"Voice not enrolled (looked for student_id='{current_user.id}')"}
             
         template_data = templates[0].to_dict()
         template_embedding = np.array(template_data.get("embedding"))

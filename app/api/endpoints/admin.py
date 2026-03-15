@@ -18,7 +18,12 @@ def get_active_class(
     current_user: schemas.User = Depends(teacher_required)
 ):
     from google.cloud.firestore import Query as FSQuery
-    sessions = db.collection("classes").where("teacher_id", "==", current_user.id).order_by("session_start", direction=FSQuery.DESCENDING).limit(1).get()
+    try:
+        sessions = db.collection("classes").where("teacher_id", "==", current_user.id).order_by("session_start", direction=FSQuery.DESCENDING).limit(1).get()
+    except Exception as e:
+        print(f"[ACTIVE_CLASS] Index query failed, falling back: {e}")
+        # Fallback: get classes without ordering (works without composite index)
+        sessions = list(db.collection("classes").where("teacher_id", "==", current_user.id).limit(1).get())
     
     if not sessions:
         raise HTTPException(status_code=404, detail="No active class found")
