@@ -41,7 +41,7 @@ def start_class_session(
         "teacher_id": current_user.id,
         "date": now.strftime("%Y-%m-%d"),
         "time": now.strftime("%H:%M"),
-        "session_start": now, # Firestore automatically converts to proper Timestamp
+        "session_start": now.isoformat(), # Save as explicit ISO string to prevent Firestore Timezone bugs
         "room": room,
         "latitude": location.latitude,
         "longitude": location.longitude,

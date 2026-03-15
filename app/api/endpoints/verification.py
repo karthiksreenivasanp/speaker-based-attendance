@@ -26,9 +26,18 @@ def haversine(lat1, lon1, lat2, lon2):
 
 VERIFICATION_THRESHOLD = 0.20 
 
-def get_attendance_status(session_start: datetime, now: datetime) -> str:
+def get_attendance_status(session_start, now: datetime) -> str:
     if not session_start:
         return "PRESENT" # Fallback if no start time set
+    
+    # Handle ISO strings returning from Firestore instead of Objects
+    if isinstance(session_start, str):
+        try:
+             # Fast API / Python 3.12 handles isoformat parsing natively. 
+             # Ensure Z is replaced if it is there for explicit UTC
+             session_start = datetime.fromisoformat(session_start.replace('Z', '+00:00'))
+        except ValueError:
+             return "PRESENT" # Fallback on unparseable date
     
     # Ensure session_start is timezone-aware for comparison
     if session_start.tzinfo is None:
@@ -151,7 +160,7 @@ async def verify_student(
         attendance_data = {
             "student_id": current_user.id,
             "class_id": target_class_id,
-            "timestamp": now,
+            "timestamp": now.isoformat(),
             "status": status,
             "is_approved": False, # New field for Firestore
             "verification_score": float(score),
@@ -248,7 +257,7 @@ async def identify_speaker(
             attendance_data = {
                 "student_id": current_user.id,
                 "class_id": class_session.get("id"),
-                "timestamp": now,
+                "timestamp": now.isoformat(),
                 "status": status,
                 "is_approved": False, # New field for Firestore
                 "verification_score": float(score),
