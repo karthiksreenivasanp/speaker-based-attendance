@@ -1,4 +1,3 @@
-import { useState, useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Link, useLocation, Navigate } from 'react-router-dom'
 import { Mic, UserCheck, Settings, Home, LogOut, Users } from 'lucide-react'
 

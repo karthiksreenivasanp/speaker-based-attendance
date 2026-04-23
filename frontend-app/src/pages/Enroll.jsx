@@ -1,9 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api';
-import { Mic, Check, Square, Upload, User, AlertCircle, PlayCircle, Loader2 } from 'lucide-react';
+import { Mic, Check, Square, User, AlertCircle, Loader2 } from 'lucide-react';
 import { WavRecorder } from '../utils/WavRecorder';
 import { motion, AnimatePresence } from 'framer-motion';
+
+const MotionDiv = motion.div;
 
 function Enroll() {
     const [step, setStep] = useState(0); // 0: Profile check, 1-3: Record Samples
@@ -30,7 +32,7 @@ function Enroll() {
             } else {
                 setStep(1);
             }
-        } catch (e) {
+        } catch {
             setStatus('Error fetching profile');
         } finally {
             setLoading(false);
@@ -91,7 +93,7 @@ function Enroll() {
 
     if (status === 'no_mentor') {
         return (
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-md mx-auto p-4 text-center mt-10">
+            <MotionDiv initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-md mx-auto p-4 text-center mt-10">
                 <div className="bg-slate-800/50 backdrop-blur-md border border-amber-500/30 p-8 rounded-3xl shadow-lg">
                     <AlertCircle size={64} className="text-amber-500 mx-auto mb-6" />
                     <h2 className="text-2xl font-bold text-white mb-2">Mentor Required</h2>
@@ -100,12 +102,12 @@ function Enroll() {
                         Return to Dashboard
                     </Link>
                 </div>
-            </motion.div>
+            </MotionDiv>
         );
     }
 
     return (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="max-w-md mx-auto p-4 space-y-6">
+        <MotionDiv initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="max-w-md mx-auto p-4 space-y-6">
             <header className="mb-6">
                 <h1 className="text-2xl font-bold text-white flex items-center gap-2">
                     <Mic className="text-primary-400" /> Voice Signature
@@ -115,7 +117,7 @@ function Enroll() {
 
             <AnimatePresence mode="wait">
                 {status === 'success' ? (
-                    <motion.div
+                    <MotionDiv
                         key="success"
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
@@ -132,9 +134,9 @@ function Enroll() {
                         >
                             Return Home
                         </button>
-                    </motion.div>
+                    </MotionDiv>
                 ) : (
-                    <motion.div key="enroll" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+                    <MotionDiv key="enroll" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
                         {/* Profile Badge */}
                         <div className="bg-slate-800/40 border border-slate-700/50 p-4 rounded-2xl flex items-center gap-4">
                             <div className="w-12 h-12 bg-indigo-500/20 rounded-full flex items-center justify-center border border-indigo-500/30">
@@ -184,7 +186,7 @@ function Enroll() {
                                 {recording ? "Recording... Tap to Stop" : "Tap Microphone to Speak"}
                             </p>
                         </div>
-                    </motion.div>
+                    </MotionDiv>
                 )}
             </AnimatePresence>
 
@@ -198,7 +200,7 @@ function Enroll() {
                     <Loader2 size={18} className="animate-spin" /> Uploading voice templates...
                 </div>
             )}
-        </motion.div>
+        </MotionDiv>
     );
 }
 

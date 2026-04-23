@@ -3,6 +3,8 @@ import { api, saveApiUrl } from '../api';
 import { motion } from 'framer-motion';
 import { Settings, Server, CheckCircle, XCircle, Info } from 'lucide-react';
 
+const MotionDiv = motion.div;
+
 function Config() {
     const [url, setUrl] = useState(api.defaults.baseURL);
     const [status, setStatus] = useState(null);
@@ -11,7 +13,7 @@ function Config() {
         try {
             await api.get('/');
             setStatus('success');
-        } catch (e) {
+        } catch {
             setStatus('error');
         }
     };
@@ -21,7 +23,7 @@ function Config() {
     };
 
     return (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="max-w-md mx-auto p-4 space-y-6">
+        <MotionDiv initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="max-w-md mx-auto p-4 space-y-6">
             <header className="mb-6">
                 <h1 className="text-2xl font-bold text-white flex items-center gap-2">
                     <Settings className="text-primary-400" /> Settings
@@ -29,7 +31,7 @@ function Config() {
                 <p className="text-slate-400 text-sm mt-1">Configure application preferences.</p>
             </header>
 
-            <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="bg-slate-800/40 border border-slate-700/50 p-6 rounded-3xl shadow-lg relative overflow-hidden">
+            <MotionDiv initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="bg-slate-800/40 border border-slate-700/50 p-6 rounded-3xl shadow-lg relative overflow-hidden">
                 <div className="absolute top-0 right-0 p-4 opacity-10">
                     <Server size={120} />
                 </div>
@@ -65,19 +67,19 @@ function Config() {
                     </div>
 
                     {status === 'success' && (
-                        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="flex items-center gap-2 text-emerald-400 bg-emerald-400/10 border border-emerald-400/20 p-3 rounded-lg text-sm mt-4">
+                        <MotionDiv initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="flex items-center gap-2 text-emerald-400 bg-emerald-400/10 border border-emerald-400/20 p-3 rounded-lg text-sm mt-4">
                             <CheckCircle size={18} /> Connection Successful! Backend is reachable.
-                        </motion.div>
+                        </MotionDiv>
                     )}
                     {status === 'error' && (
-                        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="flex items-center gap-2 text-red-400 bg-red-400/10 border border-red-400/20 p-3 rounded-lg text-sm mt-4">
+                        <MotionDiv initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="flex items-center gap-2 text-red-400 bg-red-400/10 border border-red-400/20 p-3 rounded-lg text-sm mt-4">
                             <XCircle size={18} /> Connection Failed. Ensure the server is running and accessible on this network.
-                        </motion.div>
+                        </MotionDiv>
                     )}
                 </div>
-            </motion.div>
+            </MotionDiv>
 
-            <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.1 }} className="bg-slate-800/40 border border-slate-700/50 p-6 rounded-3xl shadow-lg flex items-start gap-4">
+            <MotionDiv initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.1 }} className="bg-slate-800/40 border border-slate-700/50 p-6 rounded-3xl shadow-lg flex items-start gap-4">
                 <div className="w-12 h-12 bg-primary-500/20 rounded-full flex items-center justify-center shrink-0 text-primary-400">
                     <Info size={24} />
                 </div>
@@ -89,8 +91,8 @@ function Config() {
                         A secure, biometric attendance system designed for modern classrooms.
                     </p>
                 </div>
-            </motion.div>
-        </motion.div>
+            </MotionDiv>
+        </MotionDiv>
     );
 }
 

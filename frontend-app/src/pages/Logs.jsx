@@ -4,6 +4,8 @@ import { ArrowLeft, Download, CheckCircle, Edit, Save, X, Loader2, ClipboardList
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 
+const MotionDiv = motion.div;
+
 function Logs() {
     const [logs, setLogs] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -72,13 +74,13 @@ function Logs() {
             link.setAttribute('download', 'approved_attendance.csv');
             document.body.appendChild(link);
             link.click();
-        } catch (e) {
+        } catch {
             alert("Export failed. Ensure data is approved first.");
         }
     };
 
     return (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="max-w-2xl mx-auto p-4 pb-24 space-y-6">
+        <MotionDiv initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="max-w-2xl mx-auto p-4 pb-24 space-y-6">
             <header className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-3">
                     <Link to="/" className="w-10 h-10 bg-slate-800 hover:bg-slate-700 rounded-full flex items-center justify-center text-slate-300 transition-colors">
@@ -121,7 +123,7 @@ function Logs() {
                     ) : (
                         <div className="divide-y divide-slate-700/50">
                             {logs.map((log) => (
-                                <motion.div
+                                <MotionDiv
                                     initial={{ opacity: 0, y: 10 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     key={log.id}
@@ -174,13 +176,13 @@ function Logs() {
                                             </button>
                                         )}
                                     </div>
-                                </motion.div>
+                                </MotionDiv>
                             ))}
                         </div>
                     )}
                 </div>
             )}
-        </motion.div>
+        </MotionDiv>
     );
 }
 
