@@ -29,27 +29,39 @@ from speechbrain.inference.speaker import EncoderClassifier
 class SpeakerEmbedding:
     def __init__(self):
         self.classifier = None
-        self.model_source = None
 
-    def _resolve_model_source(self):
+    def _build_fine_tuned_source(self):
         fine_tuned_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "fine_tuned_model"))
-        fine_tuned_hparams = os.path.join(fine_tuned_dir, "hyperparams.yaml")
-        if os.path.isdir(fine_tuned_dir) and os.path.exists(fine_tuned_hparams):
-            return fine_tuned_dir, fine_tuned_dir
+        return fine_tuned_dir, fine_tuned_dir
 
+    def _build_pretrained_source(self):
         pretrained_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "pretrained_models", "spkrec-ecapa-voxceleb"))
         return "speechbrain/spkrec-ecapa-voxceleb", pretrained_dir
+
+    def _try_load_classifier(self, source, savedir):
+        self.classifier = EncoderClassifier.from_hparams(source=source, savedir=savedir)
+        self.classifier.eval()
 
     def _ensure_classifier(self):
         if self.classifier is not None:
             return
-        source, savedir = self._resolve_model_source()
+
+        fine_tuned_source, fine_tuned_savedir = self._build_fine_tuned_source()
+        fine_tuned_error = None
+        if os.path.isdir(fine_tuned_source):
+            try:
+                self._try_load_classifier(fine_tuned_source, fine_tuned_savedir)
+                return
+            except Exception as e:
+                fine_tuned_error = e
+
+        pretrained_source, pretrained_savedir = self._build_pretrained_source()
         try:
-            self.classifier = EncoderClassifier.from_hparams(source=source, savedir=savedir)
-            self.classifier.eval()
-            self.model_source = source
+            self._try_load_classifier(pretrained_source, pretrained_savedir)
         except Exception as e:
-            raise RuntimeError(f"Speaker model initialization failed from source '{source}': {str(e)}") from e
+            if fine_tuned_error:
+                raise RuntimeError("Both fine-tuned and pretrained speaker models failed to load.") from e
+            raise RuntimeError("Pretrained speaker model failed to load.") from e
 
     def get_embedding(self, signal: torch.Tensor):
         """Extracts speaker embedding from audio signal."""
