@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LogIn, ShieldCheck, Settings, Server, RefreshCcw, UserPlus } from 'lucide-react';
 import { api, saveApiUrl } from '../api';
@@ -44,15 +44,6 @@ const Login = () => {
     const [showSettings, setShowSettings] = useState(false);
     const [apiUrl, setApiUrl] = useState(localStorage.getItem('api_url') || `http://${window.location.hostname}:8001`);
     const navigate = useNavigate();
-
-    // Force update from old port 8000
-    useEffect(() => {
-        const current = localStorage.getItem('api_url');
-        if (current && current.includes(':8000')) {
-            localStorage.removeItem('api_url');
-            window.location.reload();
-        }
-    }, []);
 
     const clearStorage = () => {
         localStorage.clear();

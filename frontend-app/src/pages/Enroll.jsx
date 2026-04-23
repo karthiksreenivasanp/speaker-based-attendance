@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../api';
 import { Mic, Check, Square, User, AlertCircle, Loader2 } from 'lucide-react';
 import { WavRecorder } from '../utils/WavRecorder';
@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 const MotionDiv = motion.div;
 
 function Enroll() {
+    const navigate = useNavigate();
     const [step, setStep] = useState(0); // 0: Profile check, 1-3: Record Samples
     const [studentData, setStudentData] = useState(null);
     const [recording, setRecording] = useState(false);
@@ -129,7 +130,7 @@ function Enroll() {
                         <h2 className="text-2xl font-bold text-emerald-400 mb-2">Enrollment Complete!</h2>
                         <p className="text-emerald-100/70 mb-8">Your unique voice signature has been securely saved.</p>
                         <button
-                            onClick={() => (window.location.href = '/')}
+                            onClick={() => navigate('/')}
                             className="bg-slate-800 hover:bg-slate-700 text-white font-semibold py-3 px-8 rounded-xl transition-colors"
                         >
                             Return Home

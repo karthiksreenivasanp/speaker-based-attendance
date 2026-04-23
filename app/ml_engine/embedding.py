@@ -25,21 +25,35 @@ def _safe_symlink(src, dst, target_is_directory=False, **kwargs):
 os.symlink = _safe_symlink
 
 from speechbrain.inference.speaker import EncoderClassifier
-from app.core.config import settings
-import os
 
 class SpeakerEmbedding:
     def __init__(self):
-        # Using ECAPA-TDNN from SpeechBrain
-        model_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "fine_tuned_model"))
-        self.classifier = EncoderClassifier.from_hparams(
-            source=model_dir,
-            savedir=model_dir
-        )
-        self.classifier.eval()
+        self.classifier = None
+        self.model_source = None
+
+    def _resolve_model_source(self):
+        fine_tuned_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "fine_tuned_model"))
+        fine_tuned_hparams = os.path.join(fine_tuned_dir, "hyperparams.yaml")
+        if os.path.isdir(fine_tuned_dir) and os.path.exists(fine_tuned_hparams):
+            return fine_tuned_dir, fine_tuned_dir
+
+        pretrained_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "pretrained_models", "spkrec-ecapa-voxceleb"))
+        return "speechbrain/spkrec-ecapa-voxceleb", pretrained_dir
+
+    def _ensure_classifier(self):
+        if self.classifier is not None:
+            return
+        source, savedir = self._resolve_model_source()
+        try:
+            self.classifier = EncoderClassifier.from_hparams(source=source, savedir=savedir)
+            self.classifier.eval()
+            self.model_source = source
+        except Exception as e:
+            raise RuntimeError(f"Speaker model initialization failed from source '{source}': {str(e)}") from e
 
     def get_embedding(self, signal: torch.Tensor):
         """Extracts speaker embedding from audio signal."""
+        self._ensure_classifier()
         with torch.no_grad():
             embeddings = self.classifier.encode_batch(signal)
             # Minimize to 1D vector
@@ -47,6 +61,7 @@ class SpeakerEmbedding:
 
     def compute_similarity(self, emb1, emb2):
         """Computes Cosine Similarity between two embeddings."""
+        self._ensure_classifier()
         # Ensure numpy arrays
         score = torch.nn.functional.cosine_similarity(
             torch.tensor(emb1), torch.tensor(emb2), dim=0
