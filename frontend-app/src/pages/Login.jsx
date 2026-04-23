@@ -10,7 +10,9 @@ const MotionButton = motion.button;
 const extractAuthErrorMessage = (responseData, statusCode) => {
     const detail = responseData?.detail;
     if (Array.isArray(detail)) {
-        return detail.map(d => `${d.loc.join('.')}: ${d.msg}`).join(', ');
+        return detail
+            .map(d => `${Array.isArray(d?.loc) ? d.loc.join('.') : 'detail'}: ${d?.msg || 'Invalid request'}`)
+            .join(', ');
     }
     if (typeof detail === 'string' && detail.trim()) {
         return detail;
