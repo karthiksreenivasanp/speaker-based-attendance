@@ -1,15 +1,16 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api';
-import { Mic, Square, User, Upload, AlertCircle, MapPin, Target, LocateFixed, Verified, XCircle, Loader2, ArrowLeft } from 'lucide-react';
+import { Mic, Square, AlertCircle, Target, LocateFixed, Verified, XCircle, Loader2, ArrowLeft } from 'lucide-react';
 import { WavRecorder } from '../utils/WavRecorder';
 import { motion, AnimatePresence } from 'framer-motion';
+
+const MotionDiv = motion.div;
 
 function Verify() {
     const [recording, setRecording] = useState(false);
     const [result, setResult] = useState(null);
     const [loading, setLoading] = useState(false);
-    const [location, setLocation] = useState(null);
     const [gpsStatus, setGpsStatus] = useState('idle');
     const [hasMentor, setHasMentor] = useState(true);
     const [isSecure, setIsSecure] = useState(true);
@@ -37,7 +38,7 @@ function Verify() {
             if (!res.data.mentor_id) {
                 setHasMentor(false);
             }
-        } catch (e) {
+        } catch {
             console.error("Profile check failed");
         }
     };
@@ -50,7 +51,6 @@ function Verify() {
             watchIdRef.current = navigator.geolocation.watchPosition(
                 (pos) => {
                     const coords = { lat: pos.coords.latitude, lon: pos.coords.longitude };
-                    setLocation(coords);
                     locationRef.current = coords;
                     setGpsStatus('ready');
                     gpsStatusRef.current = 'ready';
@@ -110,7 +110,7 @@ function Verify() {
 
     if (!hasMentor) {
         return (
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-md mx-auto p-4 text-center mt-10">
+            <MotionDiv initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-md mx-auto p-4 text-center mt-10">
                 <div className="bg-slate-800/50 backdrop-blur-md border border-amber-500/30 p-8 rounded-3xl shadow-lg">
                     <AlertCircle size={64} className="text-amber-500 mx-auto mb-6" />
                     <h2 className="text-2xl font-bold text-white mb-2">Mentor Required</h2>
@@ -119,12 +119,12 @@ function Verify() {
                         Go to Dashboard
                     </button>
                 </div>
-            </motion.div>
+            </MotionDiv>
         );
     }
 
     return (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="max-w-md mx-auto p-4 space-y-6">
+        <MotionDiv initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="max-w-md mx-auto p-4 space-y-6">
             <header className="mb-6 flex items-center justify-between">
                 <div>
                     <h1 className="text-2xl font-bold text-white flex items-center gap-2">
@@ -138,7 +138,7 @@ function Verify() {
 
                 <AnimatePresence mode="wait">
                     {loading ? (
-                        <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col items-center">
+                        <MotionDiv key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col items-center">
                             <div className="relative">
                                 <div className="absolute inset-0 bg-primary-500/30 rounded-full animate-ping scale-150"></div>
                                 <div className="bg-primary-500/20 p-4 rounded-full relative z-10">
@@ -147,13 +147,13 @@ function Verify() {
                             </div>
                             <h3 className="text-xl font-bold text-white mt-6 mb-2">Analyzing Voice Print</h3>
                             <p className="text-slate-400 text-sm">Matching against your enrolled signature...</p>
-                        </motion.div>
+                        </MotionDiv>
                     ) : result ? (() => {
                         const isSuccess = (result.identified || result.verified) && !result.error;
                         const displayStatus = result.status || (result.message?.includes('PRESENT') ? 'PRESENT' : result.message?.includes('LATE') ? 'LATECOMER' : 'VERIFIED');
                         const isLate = displayStatus === 'LATECOMER' || (displayStatus && displayStatus.includes('LATE'));
                         return (
-                        <motion.div key="result" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center">
+                        <MotionDiv key="result" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center">
                             {isSuccess ? (
                                 <>
                                     <div className={`w-24 h-24 rounded-full flex items-center justify-center mb-6 shadow-xl ${isLate ? 'bg-amber-500 shadow-amber-500/30' : 'bg-emerald-500 shadow-emerald-500/30'}`}>
@@ -189,10 +189,10 @@ function Verify() {
                             >
                                 <ArrowLeft size={18} /> Retry Sign-in
                             </button>
-                        </motion.div>
+                        </MotionDiv>
                         );
                     })() : (
-                        <motion.div key="record" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col h-full justify-between items-center py-4">
+                        <MotionDiv key="record" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col h-full justify-between items-center py-4">
 
                             {/* GPS Status Dashboard Item */}
                             <div className={`w-full flex items-center justify-between p-3 rounded-xl border mb-10 transition-colors ${gpsStatus === 'ready' ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' :
@@ -260,11 +260,11 @@ function Verify() {
                                         gpsStatus === 'ready' ? "Tap Mic to Start Logging" : "Awaiting GPS coordinates..."}
                                 </p>
                             </div>
-                        </motion.div>
+                        </MotionDiv>
                     )}
                 </AnimatePresence>
             </div>
-        </motion.div>
+        </MotionDiv>
     );
 }
 

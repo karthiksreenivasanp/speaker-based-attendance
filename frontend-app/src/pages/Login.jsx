@@ -4,6 +4,9 @@ import { LogIn, ShieldCheck, Settings, Server, RefreshCcw, UserPlus } from 'luci
 import { api, saveApiUrl } from '../api';
 import { motion, AnimatePresence } from 'framer-motion';
 
+const MotionDiv = motion.div;
+const MotionButton = motion.button;
+
 const Login = () => {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
@@ -107,7 +110,7 @@ const Login = () => {
 
             <AnimatePresence>
                 {showSettings && (
-                    <motion.div 
+                    <MotionDiv 
                         initial={{ opacity: 0, y: -20, scale: 0.95 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: -20, scale: 0.95 }}
@@ -143,11 +146,11 @@ const Login = () => {
                                 Test
                             </button>
                         </div>
-                    </motion.div>
+                    </MotionDiv>
                 )}
             </AnimatePresence>
 
-            <motion.div 
+            <MotionDiv 
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
@@ -155,14 +158,14 @@ const Login = () => {
             >
                 <div className="bg-slate-800/40 backdrop-blur-xl border border-slate-700/50 p-8 rounded-3xl shadow-2xl">
                     <div className="text-center mb-8">
-                        <motion.div 
+                        <MotionDiv 
                             initial={{ scale: 0 }}
                             animate={{ scale: 1 }}
                             transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.2 }}
                             className="inline-flex items-center justify-center p-4 bg-primary-500/10 rounded-2xl mb-4"
                         >
                             <ShieldCheck size={40} className="text-primary-500" />
-                        </motion.div>
+                        </MotionDiv>
                         <h2 className="text-2xl font-bold text-white mb-2 tracking-tight">
                             {isRegister ? 'Create an Account' : 'Welcome Back'}
                         </h2>
@@ -173,7 +176,7 @@ const Login = () => {
 
                     <form onSubmit={handleAuth} className="space-y-4">
                         {isRegister && (
-                            <motion.div 
+                            <MotionDiv 
                                 initial={{ opacity: 0, height: 0 }}
                                 animate={{ opacity: 1, height: 'auto' }}
                                 className="flex gap-2 mb-2 p-1 bg-slate-900/50 rounded-xl"
@@ -192,7 +195,7 @@ const Login = () => {
                                 >
                                     Teacher
                                 </button>
-                            </motion.div>
+                            </MotionDiv>
                         )}
                         
                         <div>
@@ -207,7 +210,7 @@ const Login = () => {
                         </div>
 
                         {isRegister && role === 'STUDENT' && (
-                            <motion.div 
+                            <MotionDiv 
                                 initial={{ opacity: 0, x: -10 }}
                                 animate={{ opacity: 1, x: 0 }}
                                 className="space-y-4"
@@ -238,7 +241,7 @@ const Login = () => {
                                         className="w-1/2 bg-slate-900/80 border border-slate-700 rounded-xl px-4 py-3 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all"
                                     />
                                 </div>
-                            </motion.div>
+                            </MotionDiv>
                         )}
 
                         <div>
@@ -254,7 +257,7 @@ const Login = () => {
 
                         <AnimatePresence>
                             {error && (
-                                <motion.div 
+                                <MotionDiv 
                                     initial={{ opacity: 0, height: 0 }}
                                     animate={{ opacity: 1, height: 'auto' }}
                                     exit={{ opacity: 0, height: 0 }}
@@ -263,11 +266,11 @@ const Login = () => {
                                     <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-sm p-3 rounded-lg mt-2">
                                         {error}
                                     </div>
-                                </motion.div>
+                                </MotionDiv>
                             )}
                         </AnimatePresence>
 
-                        <motion.button 
+                        <MotionButton 
                             whileHover={{ scale: 1.01 }}
                             whileTap={{ scale: 0.98 }}
                             type="submit" 
@@ -278,7 +281,7 @@ const Login = () => {
                             ) : (
                                 <><LogIn size={18} /> Sign In</>
                             )}
-                        </motion.button>
+                        </MotionButton>
                     </form>
 
                     <div className="mt-8 text-center border-t border-slate-700/50 pt-6">
@@ -293,7 +296,7 @@ const Login = () => {
                         </p>
                     </div>
                 </div>
-            </motion.div>
+            </MotionDiv>
         </div>
     );
 };

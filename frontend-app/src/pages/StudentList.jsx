@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../api';
-import { ArrowLeft, Users, Download, Trash2, Edit2, Loader2, Search } from 'lucide-react';
+import { ArrowLeft, Users, Download, Trash2, Loader2, Search } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+
+const MotionDiv = motion.div;
 
 function StudentList() {
     const [students, setStudents] = useState([]);
@@ -49,7 +51,7 @@ function StudentList() {
         try {
             await api.delete('/api/v1/admin/attendance/reset');
             loadData();
-        } catch (e) {
+        } catch {
             alert("Failed to reset database");
         }
     };
@@ -63,7 +65,7 @@ function StudentList() {
             link.setAttribute('download', 'global_attendance_report.csv');
             document.body.appendChild(link);
             link.click();
-        } catch (e) {
+        } catch {
             alert("Export failed. Make sure records are properly generated.");
         }
     };
@@ -85,7 +87,7 @@ function StudentList() {
     );
 
     return (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="max-w-3xl mx-auto p-4 pb-24 space-y-6">
+        <MotionDiv initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="max-w-3xl mx-auto p-4 pb-24 space-y-6">
             <header className="flex items-center justify-between flex-wrap gap-4 mb-2">
                 <div className="flex items-center gap-3">
                     <Link to="/" className="w-10 h-10 bg-slate-800 hover:bg-slate-700 rounded-full flex items-center justify-center text-slate-300 transition-colors">
@@ -139,7 +141,7 @@ function StudentList() {
                         </div>
                     ) : (
                         filteredStudents.map((s, index) => (
-                            <motion.div
+                            <MotionDiv
                                 initial={{ opacity: 0, y: 10 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: index * 0.02 }}
@@ -166,12 +168,12 @@ function StudentList() {
                                         <Trash2 size={14} />
                                     </button>
                                 </div>
-                            </motion.div>
+                            </MotionDiv>
                         ))
                     )}
                 </div>
             )}
-        </motion.div>
+        </MotionDiv>
     );
 }
 

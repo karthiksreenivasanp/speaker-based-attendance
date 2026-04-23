@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api';
-import { MapPin, CheckCircle, Clock, User, LogIn, ChevronRight, FileDown, CheckCircle2, ShieldCheck, PlayCircle, Trash2, Edit } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { MapPin, Clock, User, ChevronRight, FileDown, CheckCircle2, ShieldCheck, Trash2, Edit, Mic } from 'lucide-react';
+import { motion } from 'framer-motion';
+
+const MotionDiv = motion.div;
 
 function Dashboard() {
-    const [role, setRole] = useState(localStorage.getItem('role'));
+    const role = localStorage.getItem('role');
     const [loading, setLoading] = useState(true);
 
     // Teacher State
@@ -41,7 +43,7 @@ function Dashboard() {
                     const classRes = await api.get('/api/v1/admin/classes/active');
                     activeClass = classRes.data;
                     setClassInfo(activeClass);
-                } catch (err) {
+                } catch {
                     console.log("No active class found.");
                     setClassInfo(null);
                 }
@@ -107,7 +109,7 @@ function Dashboard() {
                 });
                 alert("Location Fixed! Session Started.");
                 loadData();
-            } catch (e) {
+            } catch {
                 alert("Failed to start class session.");
             } finally {
                 setSettingLocation(false);
@@ -124,7 +126,7 @@ function Dashboard() {
             await api.post(`/api/v1/admin/attendance/approve?class_id=${classInfo.id}`);
             alert("Attendance Approved!");
             loadData();
-        } catch (e) {
+        } catch {
             alert("Failed to approve");
         }
     };
@@ -141,7 +143,7 @@ function Dashboard() {
             link.setAttribute('download', `attendance_${new Date().toISOString().split('T')[0]}.csv`);
             document.body.appendChild(link);
             link.click();
-        } catch (e) {
+        } catch {
             alert("Export failed. Make sure the sheet is approved.");
         }
     };
@@ -151,7 +153,7 @@ function Dashboard() {
             await api.patch(`/api/v1/admin/attendance/${id}?status=${status}`);
             setOverrideMode(null);
             loadData();
-        } catch (e) {
+        } catch {
             alert("Failed to update status");
         }
     };
@@ -174,7 +176,7 @@ function Dashboard() {
             await api.delete('/api/v1/students/voice');
             alert("Voice template deleted!");
             loadData();
-        } catch (e) {
+        } catch {
             alert("Failed to delete template");
         }
     };
@@ -188,7 +190,7 @@ function Dashboard() {
     }
 
     const TeacherView = () => (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="max-w-4xl mx-auto p-4 space-y-6">
+        <MotionDiv initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="max-w-4xl mx-auto p-4 space-y-6">
             <header className="mb-8">
                 <h1 className="text-3xl font-bold text-white mb-2">Teacher Dashboard</h1>
                 <p className="text-slate-400">Welcome back, Prof. {userProfile?.username}</p>
@@ -288,11 +290,11 @@ function Dashboard() {
                     )}
                 </div>
             </div>
-        </motion.div>
+        </MotionDiv>
     );
 
     const StudentView = () => (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="max-w-md mx-auto p-4 space-y-6">
+        <MotionDiv initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="max-w-md mx-auto p-4 space-y-6">
             <header className="mb-6 flex justify-between items-center">
                 <div>
                     <h1 className="text-2xl font-bold text-white">Student Hub</h1>
@@ -334,7 +336,7 @@ function Dashboard() {
             </div>
 
             {(!userProfile?.mentor_id || isChangingMentor) && (
-                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-amber-900/20 border border-amber-500/30 p-5 rounded-2xl">
+                <MotionDiv initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-amber-900/20 border border-amber-500/30 p-5 rounded-2xl">
                     <h3 className="text-amber-400 font-bold mb-2 flex items-center gap-2"><ShieldCheck size={18} /> Select Your Mentor</h3>
                     <p className="text-sm text-amber-200/70 mb-4">You must select an available mentor to attend their classes.</p>
                     <div className="space-y-2 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
@@ -349,7 +351,7 @@ function Dashboard() {
                             </button>
                         ))}
                     </div>
-                </motion.div>
+                </MotionDiv>
             )}
 
             {userProfile?.mentor_id && (
@@ -430,7 +432,7 @@ function Dashboard() {
             </div>
 
             <div className="h-10"></div> {/* Bottom padding for mobile navbar */}
-        </motion.div>
+        </MotionDiv>
     );
 
     return role === 'TEACHER' ? <TeacherView /> : <StudentView />;
