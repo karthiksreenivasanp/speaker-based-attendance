@@ -73,11 +73,20 @@ const Login = () => {
         } catch (err) {
             console.error('Auth Error:', err);
             if (err.response) {
-                const detail = err.response.data?.detail;
+                const responseData = err.response.data;
+                const detail = responseData?.detail;
                 if (Array.isArray(detail)) {
                     setError(detail.map(d => `${d.loc.join('.')}: ${d.msg}`).join(', '));
+                } else if (typeof detail === 'string' && detail.trim()) {
+                    setError(detail);
+                } else if (typeof responseData === 'string' && responseData.trim()) {
+                    setError(responseData);
+                } else if (responseData?.message) {
+                    setError(responseData.message);
+                } else if (responseData?.error) {
+                    setError(responseData.error);
                 } else {
-                    setError(detail || 'Authentication failed');
+                    setError(`Authentication failed (HTTP ${err.response.status})`);
                 }
             } else if (err.request) {
                 setError(`Connection timed out to ${apiUrl}. Check if the backend is running correctly.`);
