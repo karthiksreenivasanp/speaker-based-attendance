@@ -7,6 +7,28 @@ import { motion, AnimatePresence } from 'framer-motion';
 const MotionDiv = motion.div;
 const MotionButton = motion.button;
 
+const extractAuthErrorMessage = (responseData, statusCode) => {
+    const detail = responseData?.detail;
+    if (Array.isArray(detail)) {
+        return detail
+            .map(d => `${Array.isArray(d?.loc) ? d.loc.join('.') : 'detail'}: ${d?.msg || 'Missing or invalid field'}`)
+            .join(', ');
+    }
+    if (typeof detail === 'string' && detail.trim()) {
+        return detail;
+    }
+    if (typeof responseData === 'string' && responseData.trim()) {
+        return responseData;
+    }
+    if (responseData?.message) {
+        return responseData.message;
+    }
+    if (responseData?.error) {
+        return responseData.error;
+    }
+    return `Authentication failed (HTTP ${statusCode})`;
+};
+
 const Login = () => {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
@@ -73,12 +95,8 @@ const Login = () => {
         } catch (err) {
             console.error('Auth Error:', err);
             if (err.response) {
-                const detail = err.response.data?.detail;
-                if (Array.isArray(detail)) {
-                    setError(detail.map(d => `${d.loc.join('.')}: ${d.msg}`).join(', '));
-                } else {
-                    setError(detail || 'Authentication failed');
-                }
+                const responseData = err.response.data;
+                setError(extractAuthErrorMessage(responseData, err.response.status));
             } else if (err.request) {
                 setError(`Connection timed out to ${apiUrl}. Check if the backend is running correctly.`);
             } else {
