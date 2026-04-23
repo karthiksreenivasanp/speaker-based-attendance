@@ -11,7 +11,7 @@ const extractAuthErrorMessage = (responseData, statusCode) => {
     const detail = responseData?.detail;
     if (Array.isArray(detail)) {
         return detail
-            .map(d => `${Array.isArray(d?.loc) ? d.loc.join('.') : 'detail'}: ${d?.msg || 'Invalid request'}`)
+            .map(d => `${Array.isArray(d?.loc) ? d.loc.join('.') : 'detail'}: ${d?.msg || 'Missing or invalid field'}`)
             .join(', ');
     }
     if (typeof detail === 'string' && detail.trim()) {

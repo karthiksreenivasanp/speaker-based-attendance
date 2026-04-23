@@ -31,7 +31,7 @@ def _parse_env_credentials(firebase_env: str):
         pass
 
     raise ValueError(
-        "FIREBASE_CREDENTIALS must be one of: a file path, a JSON string, an escaped JSON string, or a base64-encoded JSON string."
+        "Failed to parse FIREBASE_CREDENTIALS: value is not a valid file path, JSON string, escaped JSON string, or base64-encoded JSON."
     )
 
 
