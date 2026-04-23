@@ -7,6 +7,26 @@ import { motion, AnimatePresence } from 'framer-motion';
 const MotionDiv = motion.div;
 const MotionButton = motion.button;
 
+const extractAuthErrorMessage = (responseData, statusCode) => {
+    const detail = responseData?.detail;
+    if (Array.isArray(detail)) {
+        return detail.map(d => `${d.loc.join('.')}: ${d.msg}`).join(', ');
+    }
+    if (typeof detail === 'string' && detail.trim()) {
+        return detail;
+    }
+    if (typeof responseData === 'string' && responseData.trim()) {
+        return responseData;
+    }
+    if (responseData?.message) {
+        return responseData.message;
+    }
+    if (responseData?.error) {
+        return responseData.error;
+    }
+    return `Authentication failed (HTTP ${statusCode})`;
+};
+
 const Login = () => {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
@@ -74,20 +94,7 @@ const Login = () => {
             console.error('Auth Error:', err);
             if (err.response) {
                 const responseData = err.response.data;
-                const detail = responseData?.detail;
-                if (Array.isArray(detail)) {
-                    setError(detail.map(d => `${d.loc.join('.')}: ${d.msg}`).join(', '));
-                } else if (typeof detail === 'string' && detail.trim()) {
-                    setError(detail);
-                } else if (typeof responseData === 'string' && responseData.trim()) {
-                    setError(responseData);
-                } else if (responseData?.message) {
-                    setError(responseData.message);
-                } else if (responseData?.error) {
-                    setError(responseData.error);
-                } else {
-                    setError(`Authentication failed (HTTP ${err.response.status})`);
-                }
+                setError(extractAuthErrorMessage(responseData, err.response.status));
             } else if (err.request) {
                 setError(`Connection timed out to ${apiUrl}. Check if the backend is running correctly.`);
             } else {

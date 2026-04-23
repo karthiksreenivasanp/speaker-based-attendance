@@ -30,7 +30,9 @@ def _parse_env_credentials(firebase_env: str):
     except (binascii.Error, UnicodeDecodeError, TypeError, json.JSONDecodeError):
         pass
 
-    raise ValueError("FIREBASE_CREDENTIALS is set but not a valid JSON/path/base64-JSON credential.")
+    raise ValueError(
+        "FIREBASE_CREDENTIALS must be one of: a file path, a JSON string, an escaped JSON string, or a base64-encoded JSON string."
+    )
 
 
 def _get_or_init_firebase_app():
@@ -47,9 +49,11 @@ def _get_or_init_firebase_app():
 
         try:
             return firebase_admin.initialize_app(cred)
-        except ValueError:
-            # Handles concurrent first-time initialization races
-            return firebase_admin.get_app()
+        except ValueError as e:
+            if "already exists" in str(e).lower():
+                # Handles concurrent first-time initialization races
+                return firebase_admin.get_app()
+            raise
 
 
 def get_db():
