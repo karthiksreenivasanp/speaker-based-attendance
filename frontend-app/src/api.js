@@ -5,7 +5,16 @@ const getBaseUrl = () => {
     const stored = localStorage.getItem('api_url');
     if (stored) return stored;
 
-    // Default to the Hugging Face backend deployment
+    const envUrl = import.meta.env.VITE_API_URL;
+    if (envUrl) return envUrl.replace(/\/$/, "");
+
+    const hostname = window.location.hostname;
+    const isLocalDev = hostname === 'localhost' || hostname === '127.0.0.1';
+    if (isLocalDev) {
+        return `http://${hostname}:8000`;
+    }
+
+    // Default to the Hugging Face backend deployment in production
     return 'https://karthiksreenivasanp-speaker-attendance-backend.hf.space';
 };
 
@@ -29,8 +38,9 @@ api.interceptors.request.use((config) => {
 });
 
 export const saveApiUrl = (url) => {
+    if (!url || !url.trim()) return;
     // Remove trailing slash
-    const cleanUrl = url.replace(/\/$/, "");
+    const cleanUrl = url.trim().replace(/\/$/, "");
     localStorage.setItem('api_url', cleanUrl);
     window.location.reload(); // Reload to apply changes
 };

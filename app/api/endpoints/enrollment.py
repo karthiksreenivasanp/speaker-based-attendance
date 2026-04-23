@@ -72,6 +72,8 @@ async def enroll_student(
             emb = speaker_model.get_embedding(signal)
             embeddings.append(emb)
             os.remove(file_location)
+    except RuntimeError as e:
+        raise HTTPException(status_code=503, detail=f"Speaker model unavailable: {str(e)}")
     except Exception as e:
         import traceback
         traceback.print_exc()

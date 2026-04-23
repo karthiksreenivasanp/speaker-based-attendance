@@ -178,6 +178,8 @@ async def verify_student(
             "message": f"Verified successfully as {status}",
             "location_verified": True
         }
+    except RuntimeError as e:
+        raise HTTPException(status_code=503, detail=f"Speaker model unavailable: {str(e)}")
         
     finally:
         if os.path.exists(file_location):
@@ -300,6 +302,8 @@ async def identify_speaker(
                 "score": float(score),
                 "liveness_score": float(liveness_score)
             }
+    except RuntimeError as e:
+        raise HTTPException(status_code=503, detail=f"Speaker model unavailable: {str(e)}")
             
     finally:
          if os.path.exists(file_location):
